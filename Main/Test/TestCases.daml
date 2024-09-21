@@ -4,7 +4,12 @@ module Main.Test.TestCases where
 import Daml.Script
 import Main.Loan.Loan
 import Main.Loan.LoanRequest
+import Main.Loan.LoanLimit
 
+
+{--
+  Testing positive scenario where amount is with permissible range of the loan
+-}
 testLoanApprovalWorkflow : Script ()
 
 testLoanApprovalWorkflow = script
@@ -20,13 +25,60 @@ testLoanApprovalWorkflow = script
     loanRequestCid <- submit borrower do
       createCmd LoanRequest with borrower = borrower,
                                   bank = bank,
-                                  amount = 1000.0,
+                                  amount = 10000.0,
                                   auditor = auditor,
                                   memo = "Home loan request"
 
+    -- Borrower creates a LoanRequest
+    debug "Bank creating maximum permisiable loan limit"
+    loanLoanCid <- submit bank do
+      createCmd LoanLimit with bank = bank,
+                                maxLimit = 500000000.0
     debug "Bank approves loan request..."
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
-      exerciseCmd loanRequestCid ApproveRequest with _approver = bank, memo = "Home loan approved"
+      exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
+                                                        loanLimitCid = loanLoanCid,
+                                                        memo = "Home loan approved"
+
+    return ()
+ 
+{--
+    testing when amount is greater than max permissible limit
+
+    NOTE:
+    You will see Red line under the Script name as we are using assertMsg
+    If we have handled the case via if else then we can see the proper message with no red line
+-}
+testAmountGreaterThanMaxLimitLoanApprovalWorkflow : Script ()
+
+testAmountGreaterThanMaxLimitLoanApprovalWorkflow = script
+  do
+    -- Create parties for borrower and bank
+    debug "Declaring parties..."
+    borrower <- allocateParty "Shalabh"
+    bank <- allocateParty "SBI"
+    auditor <- allocateParty "RBI"
+
+    -- Borrower creates a LoanRequest
+    debug "Borrowing party creating loan request..."
+    loanRequestCid <- submit borrower do
+      createCmd LoanRequest with borrower = borrower,
+                                  bank = bank,
+                                  amount = 600000000.0,
+                                  auditor = auditor,
+                                  memo = "Home loan request"
+
+    -- Borrower creates a LoanRequest
+    debug "Bank creating maximum permisiable loan limit"
+    loanLoanCid <- submit bank do
+      createCmd LoanLimit with bank = bank,
+                                maxLimit = 500000000.0
+    debug "Bank approves loan request..."
+    -- Bank approves the LoanRequest
+    loanCid <- submit bank do
+      exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
+                                                        loanLimitCid = loanLoanCid,
+                                                        memo = "Home loan approved"
 
     return ()

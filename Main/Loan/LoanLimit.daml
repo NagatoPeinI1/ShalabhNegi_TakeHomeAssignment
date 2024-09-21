@@ -1,0 +1,11 @@
+
+module Main.Loan.LoanLimit where
+
+-- The LoanLimit template to store the bank's predefined loan limit
+template LoanLimit
+  with
+    bank : Party
+    maxLimit : Decimal
+  where
+    signatory bank
+    ensure maxLimit > 0.0
