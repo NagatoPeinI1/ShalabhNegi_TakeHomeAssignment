@@ -9,6 +9,9 @@
 ```bash
 daml build
 
+daml test --files Main/Test/TestCases.daml
+
+
 daml sandbox --wall-clock-time --log-level DEBUG --ledgerid LoanSystem ./.daml\dist\LoanSystem-0.0.1.dar
 
 daml json-api --ledger-host localhost --ledger-port 6865 --http-port 7575

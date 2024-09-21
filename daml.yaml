@@ -8,8 +8,9 @@ dependencies:
 - daml-script
 start-navigator: false
 parties:
-  - Borrower
-  - Bank
+  - Shalabh
+  - SBI
+  - RBI
 sandbox-options:
   - --wall-clock-time
   - --ledgerid:TextMapApproac

@@ -8,19 +8,22 @@ template LoanRequest
     borrower : Party
     bank : Party
     amount : Decimal
+    auditor : Party
+    memo : Text
   where
-  	ensure amount > 0.00
     signatory borrower
+    observer bank, auditor
 
     -- Choice to approve the loan request
     choice ApproveRequest : ContractId Loan
       with
         _approver : Party
+        memo : Text
       controller bank
       do
       	debug "Approving Loan Request"
         -- Ensure the approver is the bank
-        assert"Approver should be bank." (_approver /= bank)
-        -- Archive the LoanRequest and create a new Loan contract
+        assert (_approver == bank)
         debug "Creating loan contract"
-        loanContractId -> create Loan with borrower, bank, amount
+        -- Archive the LoanRequest and create a new Loan contract
+        create Loan with borrower, bank, amount, auditor, memo
