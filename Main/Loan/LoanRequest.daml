@@ -1,6 +1,8 @@
+
 module Main.Loan.LoanRequest where
 
 import Main.Loan.Loan
+import Main.Loan.LoanLimit
 
 -- The LoanRequest template where the borrower requests a loan from the bank
 template LoanRequest
@@ -15,15 +17,24 @@ template LoanRequest
     observer bank, auditor
 
     -- Choice to approve the loan request
-    choice ApproveRequest : ContractId Loan
+    choice ApproveRequest :  ContractId Loan
       with
         _approver : Party
+        loanLimitCid : ContractId LoanLimit
         memo : Text
       controller bank
       do
-      	debug "Approving Loan Request"
+        debug "Approving Loan Request"
         -- Ensure the approver is the bank
         assert (_approver == bank)
+        
+        -- Fetch the LoanLimit contract
+        loanLimit <- fetch loanLimitCid
+        -- Check that the requested amount does not exceed the loan limit
+        assertMsg "Loan amount exceeds the bank's loan limit" (amount <= loanLimit.maxLimit)
+        debug (" amount: " <> show amount)
+        debug (" maxLimit: " <> show loanLimit.maxLimit)
+        debug "Loan amount is within the limit"
         debug "Creating loan contract"
         -- Archive the LoanRequest and create a new Loan contract
-        create Loan with borrower, bank, amount, auditor, memo
+        create Loan with borrower, bank, amount, auditor, memo, disbursedAmount = amount

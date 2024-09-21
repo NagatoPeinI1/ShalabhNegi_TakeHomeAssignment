@@ -1,3 +1,4 @@
+
 module Main.Loan.Loan where
 
 -- The Loan template which represents the approved loan agreement
@@ -6,9 +7,27 @@ template Loan
     borrower : Party
     bank : Party
     amount : Decimal
+    disbursedAmount : Decimal -- Track the total amount disbursed
     auditor : Party
     memo : Text
   where
     signatory borrower, bank
     observer auditor
-    ensure amount > 0.0
+
+    -- Ensure the total loan amount is positive & disbursed amount does not exceed the approved loan amount
+    ensure amount > 0.0 && disbursedAmount <= amount
+
+    -- Choice to disburse tokens to the borrower
+    choice Disburse : Loan
+      with
+        disburser : Party
+        disburseAmount : Decimal
+      controller disburser
+      do
+        debug "Disbursing tokens"
+        -- Ensure that the disbursement does not exceed the approved loan amount
+        assertMsg "Disbursement amount exceeds the approved loan" (disbursedAmount + disburseAmount <= amount)
+
+        debug "Tokens disbursed"
+        -- Return the updated loan contract with the new disbursed amount
+        return Loan with borrower, bank, amount, auditor, memo, disbursedAmount = disbursedAmount + disburseAmount
