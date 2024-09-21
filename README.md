@@ -2,6 +2,8 @@
 
 1. [Easy] Question: Implementing a Loan Approval Workflow
 
+2. [Medium] Loan Approval and Token Disbursement with Loan Limit Validation
+
 -- LoanSystem is the name specified in daml.yaml
 
 ```bash
