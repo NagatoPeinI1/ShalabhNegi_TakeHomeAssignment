@@ -1,0 +1,15 @@
+sdk-version: 2.9.4
+name: LoanSystem
+version: 0.1.0
+source: Main
+dependencies:
+- daml-prim
+- daml-stdlib
+- daml-script
+start-navigator: false
+parties:
+  - Borrower
+  - Bank
+sandbox-options:
+  - --wall-clock-time
+  - --ledgerid:TextMapApproac

@@ -1,0 +1,29 @@
+module Main.Test.TestCases where
+
+--- File Imports
+import Daml.Script
+import Main.Loan.Loan
+import Main.Loan.LoanRequest
+
+-- Test script to simulate loan request and approval process
+testLoanApprovalWorkflow : Script ()
+testLoanApprovalWorkflow = script do
+    -- Create parties for borrower and bank
+    borrower <- allocateParty "Borrower"
+    bank <- allocateParty "Bank"
+
+    -- Borrower creates a LoanRequest
+    loanRequestCid <- submit borrower do
+      createCmd LoanRequest with
+        borrower = borrower
+        bank = bank
+        amount = 1000.00
+
+    -- Bank approves the LoanRequest
+    loanCid <- submit bank do
+      exerciseCmd loanRequestCid ApproveRequest with _approver = bank
+
+    -- Retrieve the Loan contract to verify its creation
+    loan <- queryContractId @Loan loanCid
+    debug loan
+return ()
