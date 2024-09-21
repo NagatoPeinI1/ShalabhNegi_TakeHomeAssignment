@@ -1,0 +1,26 @@
+module Main.Loan.LoanRequest where
+
+import Main.Loan.Loan
+
+-- The LoanRequest template where the borrower requests a loan from the bank
+template LoanRequest
+  with
+    borrower : Party
+    bank : Party
+    amount : Decimal
+  where
+  	ensure amount > 0.00
+    signatory borrower
+
+    -- Choice to approve the loan request
+    choice ApproveRequest : ContractId Loan
+      with
+        _approver : Party
+      controller bank
+      do
+      	debug "Approving Loan Request"
+        -- Ensure the approver is the bank
+        assert"Approver should be bank." (_approver /= bank)
+        -- Archive the LoanRequest and create a new Loan contract
+        debug "Creating loan contract"
+        loanContractId -> create Loan with borrower, bank, amount

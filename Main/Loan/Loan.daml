@@ -1,0 +1,11 @@
+module Main.Loan.Loan where
+
+-- The Loan template which represents the approved loan agreement
+template Loan
+  with
+    borrower : Party
+    bank : Party
+    amount : Decimal
+  where
+    ensure amount > 0.00
+    signatory borrower, bank
