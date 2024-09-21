@@ -5,25 +5,28 @@ import Daml.Script
 import Main.Loan.Loan
 import Main.Loan.LoanRequest
 
--- Test script to simulate loan request and approval process
 testLoanApprovalWorkflow : Script ()
-testLoanApprovalWorkflow = script do
+
+testLoanApprovalWorkflow = script
+  do
     -- Create parties for borrower and bank
-    borrower <- allocateParty "Borrower"
-    bank <- allocateParty "Bank"
+    debug "Declaring parties..."
+    borrower <- allocateParty "Shalabh"
+    bank <- allocateParty "SBI"
+    auditor <- allocateParty "RBI"
 
     -- Borrower creates a LoanRequest
+    debug "Borrowing party creating loan request..."
     loanRequestCid <- submit borrower do
-      createCmd LoanRequest with
-        borrower = borrower
-        bank = bank
-        amount = 1000.00
+      createCmd LoanRequest with borrower = borrower,
+                                  bank = bank,
+                                  amount = 1000.0,
+                                  auditor = auditor,
+                                  memo = "Home loan request"
 
+    debug "Bank approves loan request..."
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
-      exerciseCmd loanRequestCid ApproveRequest with _approver = bank
+      exerciseCmd loanRequestCid ApproveRequest with _approver = bank, memo = "Home loan approved"
 
-    -- Retrieve the Loan contract to verify its creation
-    loan <- queryContractId @Loan loanCid
-    debug loan
-return ()
+    return ()
