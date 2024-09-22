@@ -6,6 +6,10 @@
 
 2. [Medium] Loan Approval and Token Disbursement with Loan Limit Validation
 
+# feature/3-loan-repayment-workflow
+
+3. [Difficult]: Loan Repayment Workflow
+
 -- LoanSystem is the name specified in daml.yaml
 
 ```bash
