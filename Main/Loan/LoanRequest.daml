@@ -54,3 +54,4 @@ template LoanRequest
           loanRepaymentCid -- Pass the loan repayment contract id
           auditor
           memo = _memo
+          status = Approved

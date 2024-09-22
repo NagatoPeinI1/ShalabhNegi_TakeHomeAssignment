@@ -4,12 +4,17 @@ module Main.Loan.Loan where
 import Main.Loan.LoanLimit
 import Main.Loan.LoanRepayment
 
+-- Define the LoanStatus enum
+data LoanStatus = Approved | Disbursed | Repaid
+  deriving (Eq, Show)
+
 -- The Loan template which represents the approved loan agreement
 template Loan
   with
     borrower : Party
     bank : Party
     amount : Decimal
+    status : LoanStatus
     disbursedAmount : Decimal -- Track the total amount disbursed
     totalRepaid : Decimal -- Track the total amount repaid
     loanRepaymentCid : ContractId LoanRepayment
@@ -24,22 +29,21 @@ template Loan
     ensure amount > 0.0 && disbursedAmount <= amount
 
     -- Choice to disburse tokens to the borrower
-    choice Disburse : Loan
+    nonconsuming choice Disburse : Loan
       with
         disburser : Party
-        disburseAmount : Decimal
       controller disburser
       do
         debug "Disbursing tokens"
-        -- Ensure that the disbursement does not exceed the approved loan amount
-        assertMsg "Disbursement amount exceeds the approved loan" (disbursedAmount + disburseAmount <= amount)
+        -- Ensure that the disbursement should be done by bank only
+        assertMsg "You are not authorized to disburse loan" (disburser == bank)
 
         debug "Tokens disbursed"
         -- Return the updated loan contract with the new disbursed amount
-        return this with disbursedAmount = disbursedAmount + disburseAmount
+        return this with disbursedAmount = amount, status = Disbursed
 
     -- Choice to repay the loan amount incrementally
-    choice Repay : Loan
+    nonconsuming choice Repay : Loan
       with
         repaymentAmount : Decimal
       controller borrower

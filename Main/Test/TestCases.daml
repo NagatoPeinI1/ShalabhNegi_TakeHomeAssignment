@@ -34,6 +34,7 @@ testLoanApprovalWorkflow = script
     loanLoanCid <- submit bank do
       createCmd LoanLimit with bank = bank,
                                 maxLimit = 500000000.0
+
     debug "Bank approves loan request..."
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
@@ -42,6 +43,12 @@ testLoanApprovalWorkflow = script
                                                         _memo = "Home loan approved",
                                                         _minRepaymentAmount = 100.00
 
+    -- disbursing loan
+    debug "Disburse loan"
+    submit bank do  
+      exerciseCmd loanCid Disburse with disburser = bank
+
+    -- fin
     return ()
  
 {--
@@ -83,5 +90,10 @@ testAmountGreaterThanMaxLimitLoanApprovalWorkflow = script
                                                         _memo = "Home loan approved",
                                                         _minRepaymentAmount = 100.00
 
+    -- disbursing loan
+    debug "Disburse loan"
+    submit bank do  
+      exerciseCmd loanCid Disburse with disburser = bank
 
+    -- fin
     return ()
