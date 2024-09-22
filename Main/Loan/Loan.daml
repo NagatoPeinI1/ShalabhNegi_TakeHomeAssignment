@@ -1,6 +1,9 @@
 
 module Main.Loan.Loan where
 
+import Main.Loan.LoanLimit
+import Main.Loan.LoanRepayment
+
 -- The Loan template which represents the approved loan agreement
 template Loan
   with
@@ -8,8 +11,11 @@ template Loan
     bank : Party
     amount : Decimal
     disbursedAmount : Decimal -- Track the total amount disbursed
+    totalRepaid : Decimal -- Track the total amount repaid
+    loanRepaymentCid : ContractId LoanRepayment
     auditor : Party
     memo : Text
+    
   where
     signatory borrower, bank
     observer auditor
@@ -30,4 +36,26 @@ template Loan
 
         debug "Tokens disbursed"
         -- Return the updated loan contract with the new disbursed amount
-        return Loan with borrower, bank, amount, auditor, memo, disbursedAmount = disbursedAmount + disburseAmount
+        return this with disbursedAmount = disbursedAmount + disburseAmount
+
+    -- Choice to repay the loan amount incrementally
+    choice Repay : Loan
+      with
+        repaymentAmount : Decimal
+      controller borrower
+      do
+        -- Fetch the repayment restriction to verify the minimum repayment amount
+        restriction <- fetch loanRepaymentCid
+        assertMsg "Repayment amount is below the minimum required" (repaymentAmount >= restriction.minRepaymentAmount)
+        let newTotalRepaid = totalRepaid + repaymentAmount
+        assertMsg "Repayment exceeds the loan amount" (newTotalRepaid <= amount)
+        
+        -- Archive the loan if the full amount is repaid
+        if newTotalRepaid == amount
+          then do
+            -- Archive the loan contract
+            debug "Loan fully repaid, archiving loan contract"
+            archive self
+            -- Update the LoanLimit (this would be implemented in LoanLimit contract)
+            return this
+          else return this with totalRepaid = newTotalRepaid

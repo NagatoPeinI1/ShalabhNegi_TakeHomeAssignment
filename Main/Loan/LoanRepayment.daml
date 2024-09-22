@@ -1,0 +1,10 @@
+
+module Main.Loan.LoanRepayment where
+
+template LoanRepayment
+  with
+    bank : Party
+    borrower : Party
+    minRepaymentAmount : Decimal
+  where
+    signatory bank, borrower

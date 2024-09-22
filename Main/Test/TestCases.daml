@@ -38,8 +38,9 @@ testLoanApprovalWorkflow = script
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
       exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
-                                                        loanLimitCid = loanLoanCid,
-                                                        memo = "Home loan approved"
+                                                        _loanLimitCid = loanLoanCid,
+                                                        _memo = "Home loan approved",
+                                                        _minRepaymentAmount = 100.00
 
     return ()
  
@@ -78,7 +79,9 @@ testAmountGreaterThanMaxLimitLoanApprovalWorkflow = script
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
       exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
-                                                        loanLimitCid = loanLoanCid,
-                                                        memo = "Home loan approved"
+                                                        _loanLimitCid = loanLoanCid,
+                                                        _memo = "Home loan approved",
+                                                        _minRepaymentAmount = 100.00
+
 
     return ()

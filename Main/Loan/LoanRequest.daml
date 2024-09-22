@@ -1,8 +1,8 @@
-
 module Main.Loan.LoanRequest where
 
 import Main.Loan.Loan
 import Main.Loan.LoanLimit
+import Main.Loan.LoanRepayment
 
 -- The LoanRequest template where the borrower requests a loan from the bank
 template LoanRequest
@@ -20,8 +20,9 @@ template LoanRequest
     choice ApproveRequest :  ContractId Loan
       with
         _approver : Party
-        loanLimitCid : ContractId LoanLimit
-        memo : Text
+        _loanLimitCid : ContractId LoanLimit
+        _minRepaymentAmount : Decimal
+        _memo : Text
       controller bank
       do
         debug "Approving Loan Request"
@@ -29,12 +30,27 @@ template LoanRequest
         assert (_approver == bank)
         
         -- Fetch the LoanLimit contract
-        loanLimit <- fetch loanLimitCid
+        loanLimit <- fetch _loanLimitCid
         -- Check that the requested amount does not exceed the loan limit
         assertMsg "Loan amount exceeds the bank's loan limit" (amount <= loanLimit.maxLimit)
-        debug (" amount: " <> show amount)
-        debug (" maxLimit: " <> show loanLimit.maxLimit)
-        debug "Loan amount is within the limit"
-        debug "Creating loan contract"
-        -- Archive the LoanRequest and create a new Loan contract
-        create Loan with borrower, bank, amount, auditor, memo, disbursedAmount = amount
+
+        debug "Creating Loan Repayment contract so that it can be linked with the Loan contract."
+
+        -- Create the loan contract with the new fields
+        loanRepaymentCid <- create LoanRepayment with
+          borrower
+          bank
+          minRepaymentAmount =_minRepaymentAmount
+          
+        debug "Creating Loanm Contract linked with the Loan Repayment contract."
+
+        -- Create the loan contract with the new fields
+        create Loan with
+          borrower
+          bank
+          amount
+          disbursedAmount = 0.0 -- Initially, no amount is disbursed
+          totalRepaid = 0.0 -- Initialize the total repaid amount to 0
+          loanRepaymentCid -- Pass the loan repayment contract id
+          auditor
+          memo = _memo
