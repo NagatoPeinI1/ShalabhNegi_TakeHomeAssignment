@@ -26,18 +26,13 @@ template Loan
     observer auditor
 
     -- Ensure the total loan amount is positive & disbursed amount does not exceed the approved loan amount
-    ensure amount > 0.0 && disbursedAmount <= amount
+    ensure amount > 0.00 && disbursedAmount <= amount
 
     -- Choice to disburse tokens to the borrower
     nonconsuming choice Disburse : Loan
-      with
-        disburser : Party
-      controller disburser
+      controller bank
       do
         debug "Disbursing tokens"
-        -- Ensure that the disbursement should be done by bank only
-        assertMsg "You are not authorized to disburse loan" (disburser == bank)
-
         debug "Tokens disbursed"
         -- Return the updated loan contract with the new disbursed amount
         return this with disbursedAmount = amount, status = Disbursed
@@ -51,15 +46,22 @@ template Loan
         -- Fetch the repayment restriction to verify the minimum repayment amount
         restriction <- fetch loanRepaymentCid
         assertMsg "Repayment amount is below the minimum required" (repaymentAmount >= restriction.minRepaymentAmount)
+        debug "totalRepaid"
+        debug totalRepaid
+        debug "repaymentAmount"
+        debug repaymentAmount
         let newTotalRepaid = totalRepaid + repaymentAmount
+                
+        debug "newTotalRepaid"
+        debug newTotalRepaid
+        debug "amount"
+        debug amount
         assertMsg "Repayment exceeds the loan amount" (newTotalRepaid <= amount)
-        
-        -- Archive the loan if the full amount is repaid
+
+        -- Archive the loan if the full amount is repaid and update the status to Repaid
         if newTotalRepaid == amount
           then do
-            -- Archive the loan contract
-            debug "Loan fully repaid, archiving loan contract"
-            archive self
-            -- Update the LoanLimit (this would be implemented in LoanLimit contract)
-            return this
+            debug "Loan fully repaid, updating status to Repaid"
+            return this with totalRepaid = newTotalRepaid,
+                                status = Repaid
           else return this with totalRepaid = newTotalRepaid

@@ -49,8 +49,8 @@ template LoanRequest
           borrower
           bank
           amount
-          disbursedAmount = 0.0 -- Initially, no amount is disbursed
-          totalRepaid = 0.0 -- Initialize the total repaid amount to 0
+          disbursedAmount = 0.00 -- Initially, no amount is disbursed
+          totalRepaid = 0.00 -- Initialize the total repaid amount to 0
           loanRepaymentCid -- Pass the loan repayment contract id
           auditor
           memo = _memo

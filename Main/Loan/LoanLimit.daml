@@ -8,4 +8,4 @@ template LoanLimit
     maxLimit : Decimal
   where
     signatory bank
-    ensure maxLimit > 0.0
+    ensure maxLimit > 0.00
