@@ -15,32 +15,50 @@ testLoanApprovalWorkflow : Script ()
 testLoanApprovalWorkflow = script
   do
     -- Create parties for borrower and bank
-    debug "Declaring parties..."
+    debug "[Scenario]:  Declaring parties..."
     borrower <- allocateParty "Shalabh"
     bank <- allocateParty "SBI"
     auditor <- allocateParty "RBI"
 
     -- Borrower creates a LoanRequest
-    debug "Borrowing party creating loan request..."
+    debug "[Scenario]:  Borrowing party creating loan request..."
     loanRequestCid <- submit borrower do
       createCmd LoanRequest with borrower = borrower,
                                   bank = bank,
-                                  amount = 10000.0,
+                                  amount = 10000.00,
                                   auditor = auditor,
                                   memo = "Home loan request"
 
     -- Borrower creates a LoanRequest
-    debug "Bank creating maximum permisiable loan limit"
+    debug "[Scenario]:  Bank creating maximum permisiable loan limit"
     loanLoanCid <- submit bank do
       createCmd LoanLimit with bank = bank,
-                                maxLimit = 500000000.0
-    debug "Bank approves loan request..."
+                                maxLimit = 500000000.00
+
+    debug "[Scenario]:  Bank approves loan request..."
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
       exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
-                                                        loanLimitCid = loanLoanCid,
-                                                        memo = "Home loan approved"
+                                                        _loanLimitCid = loanLoanCid,
+                                                        _memo = "Home loan approved",
+                                                        _minRepaymentAmount = 100.00
 
+    -- disbursing loan
+    debug "[Scenario]:  Disburse loan"
+    disburseLoanCid <- submit bank do  
+      exerciseCmd loanCid Disburse
+
+    -- repaying loan
+    debug "[Scenario]:  repaying 1st installment loan"
+    firstRepaymentCid <- submit borrower do  
+      exerciseCmd disburseLoanCid Repay with repaymentAmount = 5000.00
+
+    -- debug "[Scenario]:  repaying 2nd installment loan"
+    submit borrower do  
+      exerciseCmd firstRepaymentCid Repay with repaymentAmount = 5000.00
+
+  
+    -- fin
     return ()
  
 {--
@@ -55,13 +73,13 @@ testAmountGreaterThanMaxLimitLoanApprovalWorkflow : Script ()
 testAmountGreaterThanMaxLimitLoanApprovalWorkflow = script
   do
     -- Create parties for borrower and bank
-    debug "Declaring parties..."
+    debug "[Scenario]:  Declaring parties..."
     borrower <- allocateParty "Shalabh"
     bank <- allocateParty "SBI"
     auditor <- allocateParty "RBI"
 
     -- Borrower creates a LoanRequest
-    debug "Borrowing party creating loan request..."
+    debug "[Scenario]:  Borrowing party creating loan request..."
     loanRequestCid <- submit borrower do
       createCmd LoanRequest with borrower = borrower,
                                   bank = bank,
@@ -70,15 +88,72 @@ testAmountGreaterThanMaxLimitLoanApprovalWorkflow = script
                                   memo = "Home loan request"
 
     -- Borrower creates a LoanRequest
-    debug "Bank creating maximum permisiable loan limit"
+    debug "[Scenario]:  Bank creating maximum permisiable loan limit"
     loanLoanCid <- submit bank do
       createCmd LoanLimit with bank = bank,
                                 maxLimit = 500000000.0
-    debug "Bank approves loan request..."
+    debug "[Scenario]:  Bank approves loan request..."
     -- Bank approves the LoanRequest
     loanCid <- submit bank do
       exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
-                                                        loanLimitCid = loanLoanCid,
-                                                        memo = "Home loan approved"
+                                                        _loanLimitCid = loanLoanCid,
+                                                        _memo = "Home loan approved",
+                                                        _minRepaymentAmount = 100.00
 
+    -- disbursing loan
+    debug "[Scenario]:  Disburse loan"
+    submit bank do  
+      exerciseCmd loanCid Disburse
+
+    -- fin
+    return ()
+
+
+{--
+  Testing negative scenario where paying amount more than disburded loan amount
+-}
+testPayingExtraLoanAmountWorkflow : Script ()
+
+testPayingExtraLoanAmountWorkflow = script
+  do
+    -- Create parties for borrower and bank
+    debug "[Scenario]:  Declaring parties..."
+    borrower <- allocateParty "Shalabh"
+    bank <- allocateParty "SBI"
+    auditor <- allocateParty "RBI"
+
+    -- Borrower creates a LoanRequest
+    debug "[Scenario]:  Borrowing party creating loan request..."
+    loanRequestCid <- submit borrower do
+      createCmd LoanRequest with borrower = borrower,
+                                  bank = bank,
+                                  amount = 10000.00,
+                                  auditor = auditor,
+                                  memo = "Home loan request"
+
+    -- Borrower creates a LoanRequest
+    debug "[Scenario]:  Bank creating maximum permisiable loan limit"
+    loanLoanCid <- submit bank do
+      createCmd LoanLimit with bank = bank,
+                                maxLimit = 500000000.00
+
+    debug "[Scenario]:  Bank approves loan request..."
+    -- Bank approves the LoanRequest
+    loanCid <- submit bank do
+      exerciseCmd loanRequestCid ApproveRequest with _approver = bank,
+                                                        _loanLimitCid = loanLoanCid,
+                                                        _memo = "Home loan approved",
+                                                        _minRepaymentAmount = 100.00
+
+    -- disbursing loan
+    debug "[Scenario]:  Disburse loan"
+    disburseCid <- submit bank do  
+      exerciseCmd loanCid Disburse
+
+    -- repaying loan
+    debug "[Scenario]:  repaying extra amount than loan amount"
+    submit borrower do  
+      exerciseCmd disburseCid Repay with repaymentAmount = 12000.00
+  
+    -- fin
     return ()
