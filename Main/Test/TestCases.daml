@@ -45,17 +45,17 @@ testLoanApprovalWorkflow = script
 
     -- disbursing loan
     debug "[Scenario]:  Disburse loan"
-    submit bank do  
+    disburseLoanCid <- submit bank do  
       exerciseCmd loanCid Disburse
 
     -- repaying loan
     debug "[Scenario]:  repaying 1st installment loan"
-    submit borrower do  
-      exerciseCmd loanCid Repay with repaymentAmount = 5000.00
+    firstRepaymentCid <- submit borrower do  
+      exerciseCmd disburseLoanCid Repay with repaymentAmount = 5000.00
 
-    debug "[Scenario]:  repaying 2nd installment loan"
+    -- debug "[Scenario]:  repaying 2nd installment loan"
     submit borrower do  
-      exerciseCmd loanCid Repay with repaymentAmount = 5000.00
+      exerciseCmd firstRepaymentCid Repay with repaymentAmount = 5000.00
 
   
     -- fin
@@ -147,13 +147,13 @@ testPayingExtraLoanAmountWorkflow = script
 
     -- disbursing loan
     debug "[Scenario]:  Disburse loan"
-    submit bank do  
+    disburseCid <- submit bank do  
       exerciseCmd loanCid Disburse
 
     -- repaying loan
     debug "[Scenario]:  repaying extra amount than loan amount"
     submit borrower do  
-      exerciseCmd loanCid Repay with repaymentAmount = 12000.00
+      exerciseCmd disburseCid Repay with repaymentAmount = 12000.00
   
     -- fin
     return ()
