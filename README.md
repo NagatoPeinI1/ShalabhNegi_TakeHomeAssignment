@@ -17,6 +17,8 @@ daml build
 
 daml test --files Main/Test/TestCases.daml
 
+daml trigger --dar ./.daml/dist/LoanSystem-0.1.0.dar --trigger-name LoanSystem-0.1.0:MyTriggerRule --ledger-host localhost --ledger-port 6865
+
 daml sandbox --wall-clock-time --log-level DEBUG --ledgerid LoanSystem ./.daml\dist\LoanSystem-0.0.1.dar
 
 daml json-api --ledger-host localhost --ledger-port 6865 --http-port 7575

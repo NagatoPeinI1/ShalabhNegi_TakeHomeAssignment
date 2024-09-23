@@ -1,0 +1,44 @@
+module Main.Triggers.LoanTrigger where
+
+import Daml.Trigger
+import Main.Loan.Loan
+import Daml.Trigger.LowLevel (ActiveContracts(ActiveContracts))
+
+
+-- Define the Trigger configuration
+trigger : Party -> Trigger ()
+trigger party = Trigger
+  { initialize = \_ -> pure ()
+  , updateState = \_ _ -> pure ()
+  , rule = rule party
+  , registeredTemplates = [contractType @Loan]  -- Register Loan template for monitoring
+  }
+
+-- The rule function defining the trigger's behavior
+rule : Party -> ActiveContracts -> TriggerA () ()
+rule party (ActiveContracts activeContracts) = do
+  -- Get all active Loan contracts
+  let loans = [contract | contract <- activeContracts, contract.contractType == contractType @Loan]
+
+  -- Iterate through each Loan contract found
+  forA_ loans $ \loan -> do
+    let loanData = loan.argument
+
+    -- Check if the loan is approved and has not been disbursed yet
+    if loanData.status == Approved then do
+      debug "Loan is approved. Executing the Disburse choice..."
+      -- Submit command to disburse the loan and update its status
+      emitCommands [exerciseCmd loan.contractId Disburse]
+
+    -- If loan has been disbursed, trigger repayment logic
+    else if loanData.status == Disbursed then do
+      debug "Loan is disbursed. Waiting for repayments..."
+      pure ()
+
+    -- If loan is fully repaid, do nothing
+    else if loanData.status == Repaid then do
+      debug "Loan has been fully repaid. No action needed."
+    else
+      debug "Loan is in an unknown state."
+
+  pure ()
