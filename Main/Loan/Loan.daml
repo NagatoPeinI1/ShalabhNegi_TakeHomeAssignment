@@ -1,6 +1,5 @@
 module Main.Loan.Loan where
 
-import Main.Loan.LoanLimit
 import Main.Loan.LoanRepayment
 
 -- Define the LoanStatus enum
@@ -27,32 +26,20 @@ template Loan
     -- Ensure the total loan amount is positive & disbursed amount does not exceed the approved loan amount
     ensure amount > 0.00 && disbursedAmount <= amount
 
-    -- Choice to disburse tokens to the borrower
-    -- nonconsuming choice Disburse : Loan
-    --   controller bank
-    --   do
-    --     debug "Disbursing tokens"
-    --     debug "Tokens disbursed"
-    --     -- Return the updated loan contract with the new disbursed amount
-    --     return this with disbursedAmount = amount, status = Disbursed
-        -- Choice to disburse tokens to the borrower
-    nonconsuming choice Disburse : ContractId Loan
+    choice Disburse : ContractId Loan
       controller bank
       do
-        archive self
         debug "Disbursing tokens"
         -- Return the updated loan contract with the new disbursed amount
-        cid <- create this with disbursedAmount = amount, status = Disbursed
-        debug "Tokens disbursed"
-        return cid
+        create this with disbursedAmount = amount, status = Disbursed
+
 
     -- Choice to repay the loan amount incrementally
-    nonconsuming choice Repay : ContractId Loan
+    choice Repay : ContractId Loan
       with
         repaymentAmount : Decimal
       controller borrower
       do
-        archive self
         -- Fetch the repayment restriction to verify the minimum repayment amount
         restriction <- fetch loanRepaymentCid
         assertMsg "Repayment amount is below the minimum required" (repaymentAmount >= restriction.minRepaymentAmount)
@@ -64,11 +51,8 @@ template Loan
         -- Archive the loan if the full amount is repaid and update the status to Repaid
         if newTotalRepaid == amount
           then do
-            cid <- create this with totalRepaid = newTotalRepaid,
+            create this with totalRepaid = newTotalRepaid,
                                       status = Repaid
-            debug "Loan fully repaid, updating status to Repaid"
-            return cid
           else 
               do
-                cid <- create this with totalRepaid = newTotalRepaid
-                return cid
+                create this with totalRepaid = newTotalRepaid
